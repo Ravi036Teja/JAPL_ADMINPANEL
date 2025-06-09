@@ -9,7 +9,7 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await API.get('http://localhost:5000/api/auth/profile');
+      const res = await API.get('https://japl-backend.onrender.com/api/auth/profile');
       setUser(res.data);
     } catch {
       logout();

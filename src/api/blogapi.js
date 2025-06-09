@@ -1,7 +1,7 @@
 // // admin-frontend/src/api/blogApi.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5000/api/blogs'; // Your backend API base URL
+const API_BASE_URL = 'https://japl-backend.onrender.com/api/blogs'; // Your backend API base URL
 
 // NOTE: In a real app, you'd send an Authorization header with a token
 // const config = (token) => ({

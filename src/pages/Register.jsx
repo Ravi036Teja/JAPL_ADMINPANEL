@@ -13,7 +13,7 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post('http://localhost:5000/api/auth/register', form);
+      const res = await API.post('https://japl-backend.onrender.com/api/auth/register', form);
       saveToken(res.data.token);
       navigate('/*');
     } catch (err) {

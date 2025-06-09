@@ -12,7 +12,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post('http://localhost:5000/api/auth/login', form);
+      const res = await API.post('https://japl-backend.onrender.com/api/auth/login', form);
       saveToken(res.data.token);
       navigate('/home');
     } catch (err) {

@@ -36,7 +36,7 @@ export const updateBlog = async (id, blogData) => {
   try {
     // The issue is likely here:
     // Ensure API_BASE_URL is a plain string and id is interpolated correctly
-    const response = await axios.put(`${API_BASE_URL}/${id}`, blogData);
+    const response = await axios.patch(`${API_BASE_URL}/${id}`, blogData);
     return response.data;
   } catch (error) {
     console.error(`Error updating blog with ID ${id}:`, error);

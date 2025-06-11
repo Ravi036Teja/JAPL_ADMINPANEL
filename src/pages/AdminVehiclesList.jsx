@@ -1,77 +1,3 @@
-// import React, { useEffect, useState } from 'react';
-// import { Link } from 'react-router-dom';
-// import api from '../api';
-
-// const AdminVehicleList = () => {
-//   const [vehicles, setVehicles] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchVehicles = async () => {
-//       try {
-//         const response = await api.get('/vehicles');
-//         setVehicles(response.data);
-//       } catch (error) {
-//         console.error('Error fetching vehicles:', error);
-//         alert('Failed to load vehicles');
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-//     fetchVehicles();
-//   }, []);
-
-//   if (loading) return <div className="text-center py-12">Loading vehicles...</div>;
-
-//   return (
-//     <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-20">
-//       <div className="flex justify-between items-center mb-6">
-//         <h2 className="text-2xl font-bold">Manage Vehicles</h2>
-//         <Link 
-//           to="/admin/vehicles/new" 
-//           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
-//         >
-//           Add New Vehicle
-//         </Link>
-//       </div>
-
-//       <div className="overflow-x-auto">
-//         <table className="min-w-full bg-white">
-//           <thead className="bg-gray-200">
-//             <tr>
-//               <th className="py-2 px-4 text-left">Name</th>
-//               <th className="py-2 px-4 text-left">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {vehicles.map(vehicle => (
-//               <tr key={vehicle._id} className="border-b">
-//                 <td className="py-3 px-4">{vehicle.name}</td>
-//                 <td className="py-3 px-4 space-x-2">
-//                   <Link 
-//                     to={`/admin/vehicles/edit/${vehicle._id}`}
-//                     className="bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600"
-//                   >
-//                     Edit
-//                   </Link>
-//                   <Link 
-//                     to={`/vehicles/${vehicle._id}`}
-//                     className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-gray-600"
-//                   >
-//                     View
-//                   </Link>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default AdminVehicleList;
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/api';
@@ -86,6 +12,7 @@ const AdminVehicleList = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [vehicleToDelete, setVehicleToDelete] = useState(null); // State for individual delete
 
   // Fetch vehicles
   useEffect(() => {
@@ -112,7 +39,7 @@ const AdminVehicleList = () => {
     setSortConfig({ key, direction });
   };
 
-  // Handle vehicle selection
+  // Handle vehicle selection for bulk actions
   const toggleVehicleSelection = (id) => {
     if (selectedVehicles.includes(id)) {
       setSelectedVehicles(selectedVehicles.filter(vehicleId => vehicleId !== id));
@@ -132,19 +59,41 @@ const AdminVehicleList = () => {
 
   // Handle bulk delete
   const handleBulkDelete = () => {
+    if (selectedVehicles.length > 0) {
+      setVehicleToDelete(null); // Clear any individual vehicle pending deletion
+      setShowDeleteModal(true);
+    } else {
+      alert('Please select vehicles to delete.');
+    }
+  };
+
+  // Handle individual delete click
+  const handleDeleteClick = (vehicle) => {
+    setVehicleToDelete(vehicle);
     setShowDeleteModal(true);
   };
 
-  // Confirm delete
+  // Confirm delete (for both individual and bulk)
   const confirmDelete = async () => {
     setLoading(true);
     try {
-      // This would actually be a bulk delete API call in a real app
-      // For now, we'll just simulate it
-      const newVehicles = vehicles.filter(v => !selectedVehicles.includes(v._id));
+      let idsToDelete = [];
+      if (vehicleToDelete) {
+        idsToDelete = [vehicleToDelete._id]; // Deleting a single vehicle
+      } else {
+        idsToDelete = selectedVehicles; // Deleting multiple selected vehicles
+      }
+
+      // In a real application, you would make an API call to delete these vehicles:
+      // await api.delete('/vehicles/bulk-delete', { data: { ids: idsToDelete } });
+      // or for individual: await api.delete(`/vehicles/${idsToDelete[0]}`);
+
+      // Simulate deletion in the frontend for demonstration
+      const newVehicles = vehicles.filter(v => !idsToDelete.includes(v._id));
       setVehicles(newVehicles);
       setSelectedVehicles([]);
-      alert(`${selectedVehicles.length} vehicle(s) deleted successfully`);
+      setVehicleToDelete(null); // Clear vehicle to delete after successful deletion
+      alert(`${idsToDelete.length} vehicle(s) deleted successfully`);
     } catch (error) {
       console.error('Error deleting vehicles:', error);
       alert('Failed to delete vehicles');
@@ -158,16 +107,19 @@ const AdminVehicleList = () => {
   const filteredVehicles = vehicles
     .filter(vehicle => {
       const matchesSearch = vehicle.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vehicle.description.toLowerCase().includes(searchTerm.toLowerCase());
+        vehicle.description?.toLowerCase().includes(searchTerm.toLowerCase()); // Added optional chaining for description
       const matchesCategory = selectedCategory === 'all' ||
         (vehicle.detailedSpecs?.['Vehicle Information']?.['Product Category'] === selectedCategory);
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const aValue = a[sortConfig.key] || ''; // Handle undefined values
+      const bValue = b[sortConfig.key] || ''; // Handle undefined values
+
+      if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.direction === 'asc' ? 1 : -1;
       }
       return 0;
@@ -175,7 +127,7 @@ const AdminVehicleList = () => {
 
   // Get unique categories
   const categories = ['all', ...new Set(
-    vehicles.map(v => v.detailedSpecs?.['Vehicle Information']?.['Product Category'] || 'Uncategorized')
+    vehicles.map(v => v.detailedSpecs?.['Vehicle Information']?.['Product Category'])
       .filter(Boolean)
   )];
 
@@ -203,7 +155,7 @@ const AdminVehicleList = () => {
 
   return (
     <div>
-      <Navbar/>
+      <Navbar />
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 pt-14">
@@ -224,66 +176,66 @@ const AdminVehicleList = () => {
         </div>
 
         {/* Controls */}
-        {/* <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-5 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-5 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search vehicles..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search vehicles..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          
-          <div className="md:col-span-4">
-            <div className="flex items-center gap-2">
-              <FaFilter className="text-gray-500" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          
-          <div className="md:col-span-3">
-            <div className="flex gap-2 h-full">
-              <button 
-                onClick={() => handleSort('name')}
-                className={`flex-1 flex items-center justify-center gap-1 p-2.5 border rounded-lg transition-colors ${
-                  sortConfig.key === 'name' 
-                    ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                    : 'border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <span>Sort</span>
-                {sortConfig.key === 'name' && (
-                  <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </button>
-              
-              {selectedVehicles.length > 0 && (
-                <button 
-                  onClick={handleBulkDelete}
-                  className="flex items-center gap-1 p-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+
+            <div className="md:col-span-4">
+              <div className="flex items-center gap-2">
+                <FaFilter className="text-gray-500" />
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <FaTrash />
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {category === 'all' ? 'All Categories' : category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="md:col-span-3">
+              <div className="flex gap-2 h-full">
+                <button
+                  onClick={() => handleSort('name')}
+                  className={`flex-1 flex items-center justify-center gap-1 p-2.5 border rounded-lg transition-colors ${
+                    sortConfig.key === 'name'
+                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span>Sort</span>
+                  {sortConfig.key === 'name' && (
+                    <span>{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                  )}
                 </button>
-              )}
+
+                {selectedVehicles.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="flex items-center gap-1 p-2.5 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    <FaTrash />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div> */}
 
         {/* Vehicle List */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -393,13 +345,13 @@ const AdminVehicleList = () => {
                     >
                       <FaEdit />
                     </Link>
-                    {/* <Link 
-                    to={`admin/vehicles/${vehicle._id}`}
-                    className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700"
-                    title="View"
-                  >
-                    <FaEye />
-                  </Link> */}
+                    <button
+                      onClick={() => handleDeleteClick(vehicle)} // Call handleDeleteClick for individual deletion
+                      className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors text-red-600"
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -433,9 +385,9 @@ const AdminVehicleList = () => {
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                   <FaTrash className="h-6 w-6 text-red-600" />
                 </div>
-                <h3 className="mt-4 text-lg font-medium text-gray-900">Delete vehicles</h3>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">Delete vehicle{vehicleToDelete || selectedVehicles.length > 1 ? 's' : ''}</h3>
                 <div className="mt-2 text-gray-500">
-                  <p>Are you sure you want to delete {selectedVehicles.length} selected vehicle{selectedVehicles.length > 1 ? 's' : ''}?</p>
+                  <p>Are you sure you want to delete {vehicleToDelete ? 'this' : selectedVehicles.length} selected vehicle{vehicleToDelete || selectedVehicles.length > 1 ? 's' : ''}?</p>
                   <p className="mt-1 text-sm">This action cannot be undone.</p>
                 </div>
               </div>
@@ -443,7 +395,10 @@ const AdminVehicleList = () => {
                 <button
                   type="button"
                   className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                  onClick={() => setShowDeleteModal(false)}
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setVehicleToDelete(null); // Clear pending individual delete on cancel
+                  }}
                 >
                   Cancel
                 </button>

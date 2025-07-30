@@ -1,7 +1,6 @@
 // src/api/applicationApi.js
  // Assuming your axios instance is configured here
 import axios from 'axios';
-// const APPLICATIONS_BASE_PATH = 'http://localhost:5000/api/applications';
 const APPLICATIONS_BASE_PATH = 'https://japl-backend.onrender.com/api/applications'; // This will be your new backend route
 
 export const submitJobApplication = (formData) => {

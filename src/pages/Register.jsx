@@ -14,7 +14,9 @@ export default function Register() {
     e.preventDefault();
     try {
       const res = await API.post('https://japl-backend.onrender.com/api/auth/register', form);
+
       // const res = await API.post('http://localhost:5000/api/auth/register', form);
+    // bf4cea459a65ccee4dcdedf5438fc23a6cb05d59
       saveToken(res.data.token);
       navigate('/*');
     } catch (err) {

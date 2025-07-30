@@ -1,7 +1,6 @@
 // import api from './api'; // Ensure this points to your configured Axios instance
 import axios from 'axios';
 
-// const JOB_POSTS_BASE_PATH = 'http://localhost:5000/api/jobs';
 const JOB_POSTS_BASE_PATH = 'https://japl-backend.onrender.com/api/jobs'; // Matches your backend /api/jobs route
 
 export const getAllJobPosts = async () => {
